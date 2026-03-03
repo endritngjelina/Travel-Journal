@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelLog Pro - Interactive Travel Journal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #3498db, #8e44ad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .map-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .map-container {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .entries-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .entries-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .entries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .entry-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entry-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .entry-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #8e44ad);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .entry-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .entry-location {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .entry-date {
+            color: #95a5a6;
+            font-size: 0.8rem;
+        }
+
+        .entry-content {
+            color: #34495e;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-select {
+            min-width: 150px;
+        }
+
+        .stats-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            margin-top: 10px;
+            object-fit: cover;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .export-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-map-marked-alt"></i> TravelLog Pro</h1>
+            <p>Professional Travel Journal with Interactive Map Integration</p>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalEntries">0</div>
+                    <div class="stat-label">Total Entries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="countriesVisited">0</div>
+                    <div class="stat-label">Countries Visited</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="citiesVisited">0</div>
+                    <div class="stat-label">Cities Visited</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalDistance">0</div>
+                    <div class="stat-label">Total Distance (km)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="map-section">
+                <h2><i class="fas fa-globe"></i> Interactive Travel Map</h2>
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button class="btn btn-secondary" onclick="clearMap()">
+                        <i class="fas fa-trash"></i> Clear Map
+                    </button>
+                    <button class="btn btn-success" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2><i class="fas fa-plus-circle"></i> Add New Entry</h2>
+                <form id="travelForm">
+                    <div class="form-group">
+                        <label for="title">
+                            <i class="fas fa-heading"></i> Title
+                        </label>
+                        <input type="text" id="title" required placeholder="Enter trip title">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">
+                            <i class="fas fa-map-marker-alt"></i> Location
+                        </label>
+                        <input type="text" id="location" required placeholder="City, Country">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">
+                            <i class="fas fa-calendar"></i> Date
+                        </label>
+                        <input type="date" id="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">
+                            <i class="fas fa-tags"></i> Category
+                        </label>
+                        <select id="category" required>
+                            <option value="">Select category</option>
+                            <option value="Adventure">Adventure</option>
+                            <option value="Culture">Culture</option>
+                            <option value="Food">Food</option>
+                            <option value="Nature">Nature</option>
+                            <option value="Business">Business</option>
+                            <option value="Relaxation">Relaxation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">
+                            <i class="fas fa-sticky-note"></i> Notes
+                        </label>
+                        <textarea id="notes" required placeholder="Share your travel experience..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rating">
+                            <i class="fas fa-star"></i> Rating
+                        </label>
+                        <select id="rating" required>
+                            <option value="">Rate your experience</option>
+                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                            <option value="4">⭐⭐⭐⭐ Very Good</option>
+                            <option value="3">⭐⭐⭐ Good</option>
+                            <option value="2">⭐⭐ Fair</option>
+                            <option value="1">⭐ Poor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget">
+                            <i class="fas fa-dollar-sign"></i> Budget (USD)
+                        </label>
+                        <input type="number" id="budget" min="0" placeholder="Enter total budget">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="photo">
+                            <i class="fas fa-camera"></i> Photo
+                        </label>
+                        <input type="file" id="photo" accept="image/*">
+                        <img id="photoPreview" class="image-preview" style="display: none;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Entry
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="entries-section">
+            <div class="entries-header">
+                <h2><i class="fas fa-journal-whills"></i> Travel Entries</h2>
+                <div class="search-controls">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search entries...">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Culture">Culture</option>
+                        <option value="Food">Food</option>
+                        <option value="Nature">Nature</option>
+                        <option value="Business">Business</option>
+                        <option value="Relaxation">Relaxation</option>
+                    </select>
+                    <select id="sortBy" class="filter-select">
+                        <option value="date">Sort by Date</option>
+                        <option value="rating">Sort by Rating</option>
+                        <option value="title">Sort by Title</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading entries...</p>
+            </div>
+            
+            <div class="entries-grid" id="entriesGrid">
+                <!-- Entries will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Entry</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editTitle">Title</label>
+                    <input type="text" id="editTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDate">Date</label>
+                    <input type="date" id="editDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCategory">Category</label>
+                    <select id="editCategory" required>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Culture">Culture</option>
+                        <option value="Food">Food</option>
+                        <option value="Nature">Nature</option>
+                        <option value="Business">Business</option>
+                        <option value="Relaxation">Relaxation</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editNotes">Notes</label>
+                    <textarea id="editNotes" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editRating">Rating</label>
+                    <select id="editRating" required>
+                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                        <option value="4">⭐⭐⭐⭐ Very Good</option>
+                        <option value="3">⭐⭐⭐ Good</option>
+                        <option value="2">⭐⭐ Fair</option>
+                        <option value="1">⭐ Poor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editBudget">Budget (USD)</label>
+                    <input type="number" id="editBudget" min="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Entry</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Global variables
+        let map;
+        let entries = [];
+        let markers = [];
+        let currentEditId = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            loadEntries();
+            setupEventListeners();
+            updateStats();
+        });
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            map = L.map('map').setView([40.7128, -74.0060], 2);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click event to map for adding entries
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                // Reverse geocoding to get location name
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.display_name) {
+                            document.getElementById('location').value = data.display_name;
+                        }
+                    })
+                    .catch(error => console.error('Geocoding error:', error));
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Form submission
+            document.getElementById('travelForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+            
+            // Photo preview
+            document.getElementById('photo').addEventListener('change', handlePhotoUpload);
+            
+            // Search and filter
+            document.getElementById('searchInput').addEventListener('input', filterEntries);
+            document.getElementById('categoryFilter').addEventListener('change', filterEntries);
+            document.getElementById('sortBy').addEventListener('change', filterEntries);
+            
+            // Modal events
+            document.querySelector('.close').addEventListener('click', closeModal);
+            window.addEventListener('click', function(e) {
+                if (e.target === document.getElementById('editModal')) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Handle form submission
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const entry = {
+                id: Date.now(),
+                title: formData.get('title') || document.getElementById('title').value,
+                location: formData.get('location') || document.getElementById('location').value,
+                date: formData.get('date') || document.getElementById('date').value,
+                category: formData.get('category') || document.getElementById('category').value,
+                notes: formData.get('notes') || document.getElementById('notes').value,
+                rating: parseInt(formData.get('rating') || document.getElementById('rating').value),
+                budget: parseFloat(formData.get('budget') || document.getElementById('budget').value) || 0,
+                photo: null,
+                coordinates: null
+            };
+
+            // Handle photo
+            const photoFile = document.getElementById('photo').files[0];
+            if (photoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    entry.photo = e.target.result;
+                    processEntry(entry);
+                };
+                reader.readAsDataURL(photoFile);
+            } else {
+                processEntry(entry);
+            }
+        }
+
+        // Process entry with geocoding
+        function processEntry(entry) {
+            // Geocode the location
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(entry.location)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        entry.coordinates = {
+                            lat: parseFloat(data[0].lat),
+                            lng: parseFloat(data[0].lon)
+                        };
+                    }
+                    
+                    addEntry(entry);
+                    document.getElementById('travelForm').reset();
+                    document.getElementById('photoPreview').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Geocoding error:', error);
+                    addEntry(entry);
+                    document.getElementById('travelForm').reset();
+                    document.getElementById('photoPreview').style.display = 'none';
+                });
+        }
+
+        // Add entry to the collection
+        function addEntry(entry) {
+            entries.push(entry);
+            saveEntries();
+            renderEntries();
+            updateStats();
+            
+            // Add marker to map
+            if (entry.coordinates) {
+                addMarkerToMap(entry);
+            }
+            
+            // Show success animation
+            showNotification('Entry added successfully!', 'success');
+        }
+
+        // Add marker to map
+        function addMarkerToMap(entry) {
+            if (!entry.coordinates) return;
+            
+            const marker = L.marker([entry.coordinates.lat, entry.coordinates.lng])
+                .addTo(map)
+                .bindPopup(`
+                    <div style="max-width: 200px;">
+                        <h3>${entry.title}</h3>
+                        <p><strong>Location:</strong> ${entry.location}</p>
+                        <p><strong>Date:</strong> ${entry.date}</p>
+                        <p><strong>Rating:</strong> ${'⭐'.repeat(entry.rating)}</p>
+                        <p><strong>Category:</strong> ${entry.category}</p>
+                        ${entry.photo ? `<img src="${entry.photo}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 5px; margin-top: 10px;">` : ''}
+                    </div>
+                `);
+            
+            markers.push({ id: entry.id, marker: marker });
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Render entries
+        function renderEntries() {
+            const grid = document.getElementById('entriesGrid');
+            grid.innerHTML = '';
+            
+            if (entries.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1;">No entries yet. Start your travel journal!</p>';
+                return;
+            }
+            
+            entries.forEach(entry => {
+                const entryCard = createEntryCard(entry);
+                grid.appendChild(entryCard);
+            });
+        }
+
+        // Create entry card
+        function createEntryCard(entry) {
+            const card = document.createElement('div');
+            card.className = 'entry-card fade-in';
+            card.innerHTML = `
+                <div class="entry-header">
+                    <div>
+                        <div class="entry-title">${entry.title}</div>
+                        <div class="entry-location"><i class="fas fa-map-marker-alt"></i> ${entry.location}</div>
+                        <div class="entry-date"><i class="fas fa-calendar"></i> ${formatDate(entry.date)}</div>
+                    </div>
+                    <div class="entry-actions">
+                        <button class="btn btn-primary btn-small tooltip" onclick="editEntry(${entry.id})">
+                            <i class="fas fa-edit"></i>
+                            <span class="tooltiptext">Edit</span>
+                        </button>
+                        <button class="btn btn-secondary btn-small tooltip" onclick="deleteEntry(${entry.id})">
+                            <i class="fas fa-trash"></i>
+                            <span class="tooltiptext">Delete</span>
+                        </button>
+                        <button class="btn btn-success btn-small tooltip" onclick="focusOnMap(${entry.id})">
+                            <i class="fas fa-map"></i>
+                            <span class="tooltiptext">View on Map</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="entry-content">
+                    <p><strong>Category:</strong> <span style="background: #3498db; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${entry.category}</span></p>
+                    <p><strong>Rating:</strong> ${'⭐'.repeat(entry.rating)} (${entry.rating}/5)</p>
+                    ${entry.budget > 0 ? `<p><strong>Budget:</strong> ${entry.budget.toLocaleString()}</p>` : ''}
+                    <p style="margin-top: 10px;">${entry.notes}</p>
+                    ${entry.photo ? `<img src="${entry.photo}" class="image-preview" style="display: block; margin-top: 10px; width: 100%; max-height: 200px;">` : ''}
+                </div>
+            `;
+            return card;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Edit entry
+        function editEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            
+            currentEditId = id;
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('editTitle').value = entry.title;
+            document.getElementById('editLocation').value = entry.location;
+            document.getElementById('editDate').value = entry.date;
+            document.getElementById('editCategory').value = entry.category;
+            document.getElementById('editNotes').value = entry.notes;
+            document.getElementById('editRating').value = entry.rating;
+            document.getElementById('editBudget').value = entry.budget;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // Handle edit form submission
+        function handleEditSubmit(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const entryIndex = entries.findIndex(e => e.id === id);
+            
+            if (entryIndex === -1) return;
+            
+            const updatedEntry = {
+                ...entries[entryIndex],
+                title: document.getElementById('editTitle').value,
+                location: document.getElementById('editLocation').value,
+                date: document.getElementById('editDate').value,
+                category: document.getElementById('editCategory').value,
+                notes: document.getElementById('editNotes').value,
+                rating: parseInt(document.getElementById('editRating').value),
+                budget: parseFloat(document.getElementById('editBudget').value) || 0
+            };
+            
+            // Geocode new location if changed
+            if (updatedEntry.location !== entries[entryIndex].location) {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(updatedEntry.location)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            updatedEntry.coordinates = {
+                                lat: parseFloat(data[0].lat),
+                                lng: parseFloat(data[0].lon)
+                            };
+                        }
+                        
+                        updateEntry(entryIndex, updatedEntry);
+                    })
+                    .catch(error => {
+                        console.error('Geocoding error:', error);
+                        updateEntry(entryIndex, updatedEntry);
+                    });
+            } else {
+                updateEntry(entryIndex, updatedEntry);
+            }
+        }
+
+        // Update entry
+        function updateEntry(index, updatedEntry) {
+            entries[index] = updatedEntry;
+            saveEntries();
+            renderEntries();
+            updateStats();
+            
+            // Update marker
+            const markerIndex = markers.findIndex(m => m.id === updatedEntry.id);
+            if (markerIndex !== -1) {
+                map.removeLayer(markers[markerIndex].marker);
+                markers.splice(markerIndex, 1);
+            }
+            
+            if (updatedEntry.coordinates) {
+                addMarkerToMap(updatedEntry);
+            }
+            
+            closeModal();
+            showNotification('Entry updated successfully!', 'success');
+        }
+
+        // Delete entry
+        function deleteEntry(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                entries = entries.filter(e => e.id !== id);
+                saveEntries();
+                renderEntries();
+                updateStats();
+                
+                // Remove marker
+                const markerIndex = markers.findIndex(m => m.id === id);
+                if (markerIndex !== -1) {
+                    map.removeLayer(markers[markerIndex].marker);
+                    markers.splice(markerIndex, 1);
+                }
+                
+                showNotification('Entry deleted successfully!', 'success');
+            }
+        }
+
+        // Focus on map
+        function focusOnMap(id) {
+            const entry = entries.find(e => e.id === id);
+            if (entry && entry.coordinates) {
+                map.setView([entry.coordinates.lat, entry.coordinates.lng], 10);
+                
+                // Find and open the popup
+                const marker = markers.find(m => m.id === id);
+                if (marker) {
+                    marker.marker.openPopup();
+                }
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditId = null;
+        }
+
+        // Filter entries
+        function filterEntries() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            let filteredEntries = entries.filter(entry => {
+                const matchesSearch = entry.title.toLowerCase().includes(searchTerm) ||
+                                    entry.location.toLowerCase().includes(searchTerm) ||
+                                    entry.notes.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = !categoryFilter || entry.category === categoryFilter;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            // Sort entries
+            filteredEntries.sort((a, b) => {
+                switch (sortBy) {
+                    case 'date':
+                        return new Date(b.date) - new Date(a.date);
+                    case 'rating':
+                        return b.rating - a.rating;
+                    case 'title':
+                        return a.title.localeCompare(b.title);
+                    default:
+                        return 0;
+                }
+            });
+            
+            renderFilteredEntries(filteredEntries);
+        }
+
+        // Render filtered entries
+        function renderFilteredEntries(filteredEntries) {
+            const grid = document.getElementById('entriesGrid');
+            grid.innerHTML = '';
+            
+            if (filteredEntries.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1;">No entries match your search criteria.</p>';
+                return;
+            }
+            
+            filteredEntries.forEach(entry => {
+                const entryCard = createEntryCard(entry);
+                grid.appendChild(entryCard);
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalEntries = entries.length;
+            const countriesVisited = new Set(entries.map(e => e.location.split(',').pop().trim())).size;
+            const citiesVisited = new Set(entries.map(e => e.location.split(',')[0].trim())).size;
+            const totalDistance = calculateTotalDistance();
+            
+            document.getElementById('totalEntries').textContent = totalEntries;
+            document.getElementById('countriesVisited').textContent = countriesVisited;
+            document.getElementById('citiesVisited').textContent = citiesVisited;
+            document.getElementById('totalDistance').textContent = totalDistance.toLocaleString();
+        }
+
+        // Calculate total distance (simplified calculation)
+        function calculateTotalDistance() {
+            if (entries.length < 2) return 0;
+            
+            let totalDistance = 0;
+            const entriesWithCoords = entries.filter(e => e.coordinates).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            for (let i = 1; i < entriesWithCoords.length; i++) {
+                const prev = entriesWithCoords[i - 1];
+                const curr = entriesWithCoords[i];
+                totalDistance += calculateDistance(prev.coordinates, curr.coordinates);
+            }
+            
+            return Math.round(totalDistance);
+        }
+
+        // Calculate distance between two points (Haversine formula)
+        function calculateDistance(coord1, coord2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+            const dLon = (coord2.lng - coord1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Clear map
+        function clearMap() {
+            if (confirm('Are you sure you want to clear all markers from the map?')) {
+                markers.forEach(marker => map.removeLayer(marker.marker));
+                markers = [];
+                showNotification('Map cleared successfully!', 'success');
+            }
+        }
+
+        // Export data
+        function exportData() {
+            const exportData = {
+                entries: entries,
+                exportDate: new Date().toISOString(),
+                totalEntries: entries.length,
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `travel-journal-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Data exported successfully!', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#27ae60' : '#e74c3c'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 1001;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Save entries to localStorage
+        function saveEntries() {
+            try {
+                // Note: In a real application, you would use localStorage here
+                // For this demonstration, we'll keep entries in memory
+                console.log('Entries saved:', entries);
+            } catch (error) {
+                console.error('Error saving entries:', error);
+            }
+        }
+
+        // Load entries from localStorage
+        function loadEntries() {
+            try {
+                // Note: In a real application, you would load from localStorage here
+                // For this demonstration, we'll start with sample data
+                loadSampleData();
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                entries = [];
+            }
+        }
+
+        // Load sample data for demonstration
+        function loadSampleData() {
+            const sampleEntries = [
+                {
+                    id: 1,
+                    title: "Amazing Tokyo Adventure",
+                    location: "Tokyo, Japan",
+                    date: "2024-03-15",
+                    category: "Culture",
+                    notes: "Incredible experience exploring the bustling streets of Tokyo. The blend of traditional and modern culture was fascinating. Visited Senso-ji Temple and enjoyed authentic sushi.",
+                    rating: 5,
+                    budget: 1200,
+                    photo: null,
+                    coordinates: { lat: 35.6762, lng: 139.6503 }
+                },
+                {
+                    id: 2,
+                    title: "Parisian Romance",
+                    location: "Paris, France",
+                    date: "2024-02-10",
+                    category: "Culture",
+                    notes: "A magical week in the City of Light. Climbed the Eiffel Tower, explored the Louvre, and enjoyed croissants at charming cafés. The architecture and art scene were breathtaking.",
+                    rating: 5,
+                    budget: 1800,
+                    photo: null,
+                    coordinates: { lat: 48.8566, lng: 2.3522 }
+                },
+                {
+                    id: 3,
+                    title: "Swiss Alps Hiking",
+                    location: "Interlaken, Switzerland",
+                    date: "2024-01-20",
+                    category: "Adventure",
+                    notes: "Challenging but rewarding hiking experience in the Swiss Alps. The mountain views were absolutely stunning. Perfect weather made the trek even more enjoyable.",
+                    rating: 4,
+                    budget: 900,
+                    photo: null,
+                    coordinates: { lat: 46.6863, lng: 7.8632 }
+                }
+            ];
+            
+            entries = sampleEntries;
+            renderEntries();
+            updateStats();
+            
+            // Add markers for sample data
+            entries.forEach(entry => {
+                if (entry.coordinates) {
+                    addMarkerToMap(entry);
+                }
+            });
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            
+            .leaflet-popup-content-wrapper {
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            }
+            
+            .leaflet-popup-content {
+                margin: 15px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize date input to today
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        document.getElementById('title').focus();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        exportData();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Add geolocation feature
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    map.setView([lat, lng], 13);
+                    
+                    // Reverse geocode to get location name
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.display_name) {
+                                document.getElementById('location').value = data.display_name;
+                                showNotification('Current location detected!', 'success');
+                            }
+                        })
+                        .catch(error => console.error('Geocoding error:', error));
+                });
+            } else {
+                showNotification('Geolocation is not supported by this browser.', 'error');
+            }
+        }
+
+        // Add current location button
+        const locationButton = document.createElement('button');
+        locationButton.innerHTML = '<i class="fas fa-crosshairs"></i> Use Current Location';
+        locationButton.className = 'btn btn-success';
+        locationButton.style.marginTop = '10px';
+        locationButton.onclick = getCurrentLocation;
+        document.getElementById('location').parentNode.appendChild(locationButton);
+
+        // Add weather integration (simplified)
+        function addWeatherInfo(entry) {
+            // In a real application, you would integrate with a weather API
+            // This is a placeholder for weather functionality
+            console.log('Weather info would be added for:', entry.location);
+        }
+
+        // Add travel statistics chart (placeholder)
+        function initializeCharts() {
+            // In a real application, you would create charts here
+            // This demonstrates where chart initialization would go
+            console.log('Charts would be initialized here');
+        }
+
+        // Initialize charts when page loads
+        window.addEventListener('load', initializeCharts);
+    </script>
+</body>
+</html>
