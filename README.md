@@ -61,7 +61,7 @@ Paste this into your repository's **About** settings (the ⚙️ gear icon on th
 html travel journal frontend web personal-project
 
 **Website:**
-https://endritngjelina.github.io/Travel-Journal/
+[https://endritngjelina.github.io/Travel-Journal/](https://github.com/endritngjelina/Travel-Journal)
 
 
 ***
